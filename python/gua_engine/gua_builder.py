@@ -278,3 +278,102 @@ def step8_assign_changed_lines_info(gua: dict) -> dict:
         line["changed_six_relative"] = six_relative
 
     return gua
+
+def step8_parse(old_gua: dict) -> dict:
+    # 映射表：中文术语 -> 英文代码
+    RAW_TYPE_MAP = {
+        '少阳': 'young_yang',
+        '少阴': 'young_yin',
+        '老阳': 'old_yang',
+        '老阴': 'old_yin'
+    }
+    
+    ELEMENT_MAP = {
+        '金': 'metal',
+        '木': 'wood',
+        '水': 'water',
+        '火': 'fire',
+        '土': 'earth'
+    }
+    
+    SIX_GOD_MAP = {
+        '青龙': 'green_dragon',
+        '朱雀': 'vermilion_bird',
+        '勾陈': 'entangled_snake',
+        '腾蛇': 'flying_snake',
+        '白虎': 'white_tiger',
+        '玄武': 'black_tortoise'
+    }
+    
+    SIX_KINSHIP_MAP = {
+        '父母': 'parent',
+        '子孙': 'offspring',
+        '官鬼': 'official_ghost',
+        '妻财': 'wife_wealth',
+        '兄弟': 'sibling'
+    }
+    
+    # 转换爻线数据
+    def convert_line(line):
+        new_line = {
+            'index': line['index'],
+            'is_yang': line['is_yang'],
+            'is_changed': line['changed'],
+            'raw_type': RAW_TYPE_MAP.get(line['raw'], line['raw']),
+            'element': ELEMENT_MAP.get(line['element'], line['element']),
+            'najia_heavenly_stem': line['na_jia_gan'],
+            'najia_earthly_branch': line['na_jia_zhi'],
+            'six_god': SIX_GOD_MAP.get(line['six_god'], line['six_god']),
+            'six_kinship': SIX_KINSHIP_MAP.get(line['six_relative'], line['six_relative']),
+            'is_emperor_position': line['is_shi'],
+            'is_reponse_position': line['is_ying']
+        }
+        
+        # 处理变动爻的属性
+        if line['changed']:
+            changed_props = {}
+            if 'changed_element' in line:
+                changed_props['element'] = ELEMENT_MAP.get(line['changed_element'], line['changed_element'])
+            if 'changed_na_jia_gan' in line:
+                changed_props['najia_heavenly_stem'] = line['changed_na_jia_gan']
+            if 'changed_na_jia_zhi' in line:
+                changed_props['najia_earthly_branch'] = line['changed_na_jia_zhi']
+            if 'changed_six_relative' in line:
+                changed_props['six_kinship'] = SIX_KINSHIP_MAP.get(
+                    line['changed_six_relative'], line['changed_six_relative'])
+            
+            new_line['changed_properties'] = changed_props
+        
+        return new_line
+    
+    # 构建新格式的卦象数据
+    new_gua = {
+        'metadata': {
+            'description': '六爻占卜卦象结果',
+            'conversion_date': '2023-10-15',
+            'notes': '术语基于周易六爻体系，爻位索引从1（初爻）开始'
+        },
+        'hexagram_original': {
+            'binary': old_gua['original_hexagram'],
+            'name': old_gua['hexagram_name'],
+            'outer_gua': old_gua['outer_gua'],
+            'inner_gua': old_gua['inner_gua']
+        },
+        'hexagram_changed': {
+            'binary': old_gua['changed_hexagram'],
+            'name': old_gua['changed_hexagram_name']
+        },
+        'divination_context': {
+            'generation_type': old_gua['generation_type'],
+            'gong_name': old_gua['gong_name'],
+            'shi_yao_position': old_gua['shi_position'],
+            'ying_yao_position': old_gua['ying_position'],
+            'date_info': {
+                'day_ganzhi': f"{old_gua['day_gan']}{old_gua['day_zhi']}",
+                'month_ganzhi': f"{old_gua['month_gan']}{old_gua['month_zhi']}"
+            }
+        },
+        'lines': [convert_line(line) for line in old_gua['lines']]
+    }
+    
+    return new_gua
