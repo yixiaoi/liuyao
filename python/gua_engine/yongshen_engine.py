@@ -13,7 +13,7 @@ API_URL = "https://api.deepseek.com/v1/chat/completions"
 MODEL_NAME = "deepseek-chat"
 
 def ask_deepseek_for_yongshen(gua_data,question):
-    with open('python/yongshen_engine/yongshen_rules.txt', 'r', encoding='utf-8') as f:
+    with open('python/prompt/yongshen_rules.txt', 'r', encoding='utf-8') as f:
         system_prompt = f.read()
     
     user_prompt = f"""请根据以下六爻排盘信息，判断哪个爻为用神，并说明理由：

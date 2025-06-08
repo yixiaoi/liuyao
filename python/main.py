@@ -1,5 +1,5 @@
 from gua_engine.gua_builder import build_hexagram, step8_parse
-from yongshen_engine.ai_yongshen import ask_deepseek_for_yongshen, parse_yongshen_response,add_yongshen_to_gua
+from gua_engine.yongshen_engine import ask_deepseek_for_yongshen, parse_yongshen_response,add_yongshen_to_gua
 
 def main():
      # 第 1 步：排盘
