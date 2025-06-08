@@ -1,5 +1,5 @@
 from typing import List, Dict
-from gua_engine.gua_data import three_yao_to_gua, sixty_four_gua, na_jia_table,zhi_to_element,eight_gua_to_element
+from gua_engine.gua_data import three_yao_to_gua, sixty_four_gua, na_jia_table,zhi_to_element,eight_gua_to_element, element_generate_me, element_i_generate, element_overcome_me, element_i_overcome
 
 
 def build_hexagram(raw_input: List[str],day_gan: str = "", day_zhi: str = "", month_gan: str = "",month_zhi: str = "") -> Dict:
@@ -146,11 +146,7 @@ def step5_assign_wuxing(gua: dict) -> dict:
 
 
 def step6_assign_six_relative(gua: dict) -> dict:
-    # 生克关系
-    wuxing_generate_me = {"金": "土", "水": "金", "木": "水", "火": "木", "土": "火"}
-    wuxing_i_generate = {"金": "水", "水": "木", "木": "火", "火": "土", "土": "金"}
-    wuxing_i_overcome = {"金": "木", "水": "火", "木": "土", "火": "金", "土": "水"}
-    wuxing_overcome_me = {"金": "火", "水": "土", "木": "金", "火": "水", "土": "木"}
+
 
     # 当前卦的“我”的五行（即本宫五行）
     gong = gua["gong_name"]
@@ -167,13 +163,13 @@ def step6_assign_six_relative(gua: dict) -> dict:
             line["six_relative"] = "未知"
             continue
 
-        if wuxing_generate_me[my_element] == other:
+        if element_generate_me[my_element] == other:
             line["six_relative"] = "父母"
-        elif wuxing_i_generate[my_element] == other:
+        elif element_i_generate[my_element] == other:
             line["six_relative"] = "子孙"
-        elif wuxing_overcome_me[my_element] == other:
+        elif element_overcome_me[my_element] == other:
             line["six_relative"] = "官鬼"
-        elif wuxing_i_overcome[my_element] == other:
+        elif element_i_overcome[my_element] == other:
             line["six_relative"] = "妻财"
         elif my_element == other:
             line["six_relative"] = "兄弟"
@@ -241,11 +237,7 @@ def step8_assign_changed_lines_info(gua: dict) -> dict:
     # 取本卦的本宫五行，用于六亲判断
     my_element = eight_gua_to_element[gua["gong_name"]]
 
-    # 生克关系
-    wuxing_generate_me = {"金": "土", "水": "金", "木": "水", "火": "木", "土": "火"}
-    wuxing_i_generate = {"金": "水", "水": "木", "木": "火", "火": "土", "土": "金"}
-    wuxing_i_overcome = {"金": "木", "水": "火", "木": "土", "火": "金", "土": "水"}
-    wuxing_overcome_me = {"金": "火", "水": "土", "木": "金", "火": "水", "土": "木"}
+
 
     # 只处理变爻
     for i in changed_lines:
@@ -258,13 +250,13 @@ def step8_assign_changed_lines_info(gua: dict) -> dict:
         element = zhi_to_element.get(zhi, "未知")
 
         # 六亲计算仍用原卦“我”的五行
-        if wuxing_generate_me[my_element] == element:
+        if element_generate_me[my_element] == element:
             six_relative = "父母"
-        elif wuxing_i_generate[my_element] == element:
+        elif element_i_generate[my_element] == element:
             six_relative = "子孙"
-        elif wuxing_overcome_me[my_element] == element:
+        elif element_overcome_me[my_element] == element:
             six_relative = "官鬼"
-        elif wuxing_i_overcome[my_element] == element:
+        elif element_i_overcome[my_element] == element:
             six_relative = "妻财"
         elif my_element == element:
             six_relative = "兄弟"
@@ -280,67 +272,33 @@ def step8_assign_changed_lines_info(gua: dict) -> dict:
     return gua
 
 def step8_parse(old_gua: dict) -> dict:
-    # 映射表：中文术语 -> 英文代码
-    RAW_TYPE_MAP = {
-        '少阳': 'young_yang',
-        '少阴': 'young_yin',
-        '老阳': 'old_yang',
-        '老阴': 'old_yin'
-    }
-    
-    ELEMENT_MAP = {
-        '金': 'metal',
-        '木': 'wood',
-        '水': 'water',
-        '火': 'fire',
-        '土': 'earth'
-    }
-    
-    SIX_GOD_MAP = {
-        '青龙': 'green_dragon',
-        '朱雀': 'vermilion_bird',
-        '勾陈': 'entangled_snake',
-        '腾蛇': 'flying_snake',
-        '白虎': 'white_tiger',
-        '玄武': 'black_tortoise'
-    }
-    
-    SIX_KINSHIP_MAP = {
-        '父母': 'parent',
-        '子孙': 'offspring',
-        '官鬼': 'official_ghost',
-        '妻财': 'wife_wealth',
-        '兄弟': 'sibling'
-    }
-    
-    # 转换爻线数据
+    # 转换爻线数据（直接使用原始中文值）
     def convert_line(line):
         new_line = {
             'index': line['index'],
             'is_yang': line['is_yang'],
             'is_changed': line['changed'],
-            'raw_type': RAW_TYPE_MAP.get(line['raw'], line['raw']),
-            'element': ELEMENT_MAP.get(line['element'], line['element']),
-            'najia_heavenly_stem': line['na_jia_gan'],
-            'najia_earthly_branch': line['na_jia_zhi'],
-            'six_god': SIX_GOD_MAP.get(line['six_god'], line['six_god']),
-            'six_kinship': SIX_KINSHIP_MAP.get(line['six_relative'], line['six_relative']),
-            'is_emperor_position': line['is_shi'],
-            'is_reponse_position': line['is_ying']
+            'raw_type': line['raw'],  # 直接使用原始值
+            'element': line['element'],  # 直接使用原始值
+            'najia_tian_gan': line['na_jia_gan'],
+            'najia_di_zhi': line['na_jia_zhi'],
+            'six_god': line['six_god'],  # 直接使用原始值
+            'six_kinship': line['six_relative'],  # 直接使用原始值
+            'is_shi_yao_position': line['is_shi'],
+            'is_ying_yao_position': line['is_ying']
         }
         
         # 处理变动爻的属性
         if line['changed']:
             changed_props = {}
             if 'changed_element' in line:
-                changed_props['element'] = ELEMENT_MAP.get(line['changed_element'], line['changed_element'])
+                changed_props['element'] = line['changed_element']
             if 'changed_na_jia_gan' in line:
-                changed_props['najia_heavenly_stem'] = line['changed_na_jia_gan']
+                changed_props['najia_tian_gan'] = line['changed_na_jia_gan']
             if 'changed_na_jia_zhi' in line:
-                changed_props['najia_earthly_branch'] = line['changed_na_jia_zhi']
+                changed_props['najia_di_zhi'] = line['changed_na_jia_zhi']
             if 'changed_six_relative' in line:
-                changed_props['six_kinship'] = SIX_KINSHIP_MAP.get(
-                    line['changed_six_relative'], line['changed_six_relative'])
+                changed_props['six_kinship'] = line['changed_six_relative']
             
             new_line['changed_properties'] = changed_props
         
@@ -370,7 +328,9 @@ def step8_parse(old_gua: dict) -> dict:
             'ying_yao_position': old_gua['ying_position'],
             'date_info': {
                 'day_ganzhi': f"{old_gua['day_gan']}{old_gua['day_zhi']}",
-                'month_ganzhi': f"{old_gua['month_gan']}{old_gua['month_zhi']}"
+                'day_element': zhi_to_element.get(old_gua['day_zhi'], "未知"),
+                'month_ganzhi': f"{old_gua['month_gan']}{old_gua['month_zhi']}",
+                'month_element': zhi_to_element.get(old_gua['month_zhi'], "未知")
             }
         },
         'lines': [convert_line(line) for line in old_gua['lines']]

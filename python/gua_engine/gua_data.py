@@ -174,3 +174,111 @@ eight_gua_to_element = {
     "乾": "金", "兑": "金", "离": "火", "震": "木",
     "巽": "木", "坎": "水", "艮": "土", "坤": "土"
 }
+
+element_generate_me = {"金": "土", "水": "金", "木": "水", "火": "木", "土": "火"}
+element_i_generate = {"金": "水", "水": "木", "木": "火", "火": "土", "土": "金"}
+element_i_overcome = {"金": "木", "水": "火", "木": "土", "火": "金", "土": "水"}
+element_overcome_me = {"金": "火", "水": "土", "木": "金", "火": "水", "土": "木"}
+
+
+# 地支合关系
+zhi_he = {'子': '丑', '寅': '亥', '卯': '戌', '辰': '酉',
+          '巳': '申', '午': '未', '丑': '子', '亥': '寅',
+          '戌': '卯', '酉': '辰', '申': '巳', '未': '午'}
+
+# 地支冲关系
+zhi_chong = {'子': '午', '丑': '未', '寅': '申', '卯': '酉',
+             '辰': '戌', '巳': '亥', '午': '子', '未': '丑',
+             '申': '寅', '酉': '卯', '戌': '辰', '亥': '巳'}
+
+# 有余气（简化，可进一步扩展）
+month_qi = {
+    '辰': ['寅', '卯'],
+    '未': ['巳', '午'],
+    '戌': ['申', '酉'],
+    '丑': ['亥', '子']
+}
+
+def is_conflict(yao_zhi, zhi):
+    return zhi_chong.get(yao_zhi) == zhi
+
+def is_he(yao_zhi, zhi):
+    return zhi_he.get(yao_zhi) == zhi
+
+def calc_relation(yao_element, yao_zhi, zhi, zhi_element, label):
+    score = 0
+    desc = []
+
+    if yao_zhi == zhi:
+        desc.append(f"临{label}")
+        score += 2
+    elif element_generate_me.get(yao_element) == zhi_element and is_he(yao_zhi, zhi):
+        desc.append(f"{label}生合")
+        score += 2
+    elif yao_element == zhi_element and yao_zhi != zhi:
+        desc.append(f"{label}相扶")
+        score += 1
+    elif element_generate_me.get(yao_element) == zhi_element:
+        desc.append(f"{label}相生")
+        score += 1
+    elif is_he(yao_zhi, zhi):
+        desc.append(f"{label}平合")
+        score += 0.5
+    elif zhi in month_qi.get(yao_zhi, []) and label == "月建":
+        desc.append(f"有{label}气")
+        score += 0.5
+    elif element_overcome_me.get(yao_element) == zhi_element and is_he(yao_zhi, zhi):
+        desc.append(f"{label}克合")
+        score -= 0.5
+    elif element_overcome_me.get(yao_element) == zhi_element:
+        desc.append(f"{label}相克")
+        score -= 1
+    else:
+        desc.append(f"{label}休囚")
+        score -= 0.1
+
+    return score, desc
+
+def generate_changed_properties_for_yao(yao_index: int, gua: dict) -> dict:
+    """为暗动爻构造变爻信息"""
+    changed_inner = tuple(gua['hexagram_changed']["binary"][0:3])
+    changed_outer = tuple(gua['hexagram_changed']["binary"][3:6])
+
+    changed_inner_name = three_yao_to_gua.get(changed_inner, "未知")
+    changed_outer_name = three_yao_to_gua.get(changed_outer, "未知")
+
+    # 判断使用哪个宫位来取纳甲
+    is_inner = yao_index < 3
+    if is_inner:
+        used_gua_list = na_jia_table[changed_inner_name]["inner"]
+        gan, zhi = used_gua_list[yao_index]
+    else:
+        used_gua_list = na_jia_table[changed_outer_name]["outer"]
+        gan, zhi = used_gua_list[yao_index - 3]
+
+    element = zhi_to_element.get(zhi, "未知")
+
+    # 本卦的五行用于判断六亲
+    my_element = eight_gua_to_element[gua['divination_context']["gong_name"]]
+
+    if element_generate_me[my_element] == element:
+        six_relative = "父母"
+    elif element_i_generate[my_element] == element:
+        six_relative = "子孙"
+    elif element_overcome_me[my_element] == element:
+        six_relative = "官鬼"
+    elif element_i_overcome[my_element] == element:
+        six_relative = "妻财"
+    elif my_element == element:
+        six_relative = "兄弟"
+    else:
+        six_relative = "未知"
+
+    return {
+        "changed_na_jia_gan": gan,
+        "changed_na_jia_zhi": zhi,
+        "changed_element": element,
+        "changed_six_relative": six_relative,
+        "element": element,  # 为了兼容旧函数
+        "najia_di_zhi": zhi
+    }
