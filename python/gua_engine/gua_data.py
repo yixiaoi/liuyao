@@ -169,6 +169,7 @@ zhi_to_element = {
     "辰": "土", "巳": "火", "午": "火", "未": "土",
     "申": "金", "酉": "金", "戌": "土", "亥": "水"
 }
+element_to_zhi = {v: k for k, v in zhi_to_element.items()}
 
 eight_gua_to_element = {
     "乾": "金", "兑": "金", "离": "火", "震": "木",
@@ -282,3 +283,36 @@ def generate_changed_properties_for_yao(yao_index: int, gua: dict) -> dict:
         "element": element,  # 为了兼容旧函数
         "najia_di_zhi": zhi
     }
+
+# 写死的旬空表，每组旬含10个日干支，对应一个旬空地支对
+xunkong_table = {
+    "甲子": ("戌", "亥"),
+    "甲戌": ("申", "酉"),
+    "甲申": ("午", "未"),
+    "甲午": ("辰", "巳"),
+    "甲辰": ("寅", "卯"),
+    "甲寅": ("子", "丑"),
+}
+
+# 六十甲子顺序
+liushijiazi = [
+    '甲子', '乙丑', '丙寅', '丁卯', '戊辰', '己巳', '庚午', '辛未', '壬申', '癸酉',
+    '甲戌', '乙亥', '丙子', '丁丑', '戊寅', '己卯', '庚辰', '辛巳', '壬午', '癸未',
+    '甲申', '乙酉', '丙戌', '丁亥', '戊子', '己丑', '庚寅', '辛卯', '壬辰', '癸巳',
+    '甲午', '乙未', '丙申', '丁酉', '戊戌', '己亥', '庚子', '辛丑', '壬寅', '癸卯',
+    '甲辰', '乙巳', '丙午', '丁未', '戊申', '己酉', '庚戌', '辛亥', '壬子', '癸丑',
+    '甲寅', '乙卯', '丙辰', '丁巳', '戊午', '己未', '庚申', '辛酉', '壬戌', '癸亥'
+]
+
+
+def is_xunkong_func(yao, day_ganzhi):
+    yao_dizhi = yao['najia_di_zhi']
+    # 遍历查找 day_ganzhi 属于哪个旬
+    for xun_start, xunkong_pair in xunkong_table.items():
+        start_index = liushijiazi.index(xun_start)
+        xun_group = liushijiazi[start_index:start_index + 10]
+        if day_ganzhi in xun_group:
+            return yao_dizhi in xunkong_pair
+
+    # 不在表中则默认不空
+    return False

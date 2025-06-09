@@ -1,4 +1,4 @@
-from gua_engine.gua_data import is_conflict, calc_relation, generate_changed_properties_for_yao,element_generate_me
+from gua_engine.gua_data import is_conflict, calc_relation, generate_changed_properties_for_yao,element_generate_me,is_xunkong_func,zhi_chong, element_to_zhi
 
 def evaluate_wangshuai(yao, date_info, is_changed=False):
     """
@@ -51,13 +51,6 @@ def is_wangxiang_func(yao, date_info):
                                  date_info['day_ganzhi'][1], date_info['day_element'], "日")
     return (month_score + day_score) > 0.5
 
-# 示例简化版（真正需要完整天干地支配对表）
-def is_xunkong_func(yao, day_ganzhi):
-    # 简化写死一个旬空对照表
-    # 比如甲子旬，空戌亥
-    # 返回 yao_dizhi 是否在这对空支中
-    # 可根据日干定位旬首，日支定位空支
-    return True  # 默认不空，除非你提供旬空规则
 
 def is_an_dong(yao, all_lines, date_info, is_wangxiang_func, is_xunkong_func):
     """判断是否是暗动"""
@@ -88,7 +81,7 @@ def is_an_dong(yao, all_lines, date_info, is_wangxiang_func, is_xunkong_func):
 
     return False
 
-def process_all_lines(guaxiang: dict):
+def process_all_lines_wangshuai(guaxiang: dict):
     result = []
     date_info = guaxiang['divination_context']['date_info']
     all_lines = guaxiang['lines']
@@ -134,7 +127,52 @@ def process_all_lines(guaxiang: dict):
     return result,guaxiang
 
 
+def process_all_lines_xunkong(gua):
+    """
+    处理所有爻的旬空状态
+    :param gua: dict，包含所有爻信息的卦象
+    :return: 更新后的卦象
+    """
+    date_info = gua['divination_context']['date_info']
+    month_jian = date_info['month_ganzhi'][1]  # 月建地支
 
+
+    for yao in gua['lines']:
+        yao_dizhi = yao['najia_di_zhi']
+        is_xunkong = is_xunkong_func(yao, date_info['day_ganzhi'])
+        yao['is_xunkong'] = is_xunkong
+
+        if is_xunkong:
+            desc = []
+            is_jiakong = False  #默认真空
+            desc.append(f"旬空地支：{yao['najia_di_zhi']}在{date_info['day_ganzhi']}旬空")
+            #判断真空假空
+            if yao["is_changed"] or (not yao["is_changed"] and yao.get("is_an_dong")):
+                is_jiakong = True
+                desc.append(f"自身发动")
+            # if yao["relation"]["other_yao_generate_me"]:
+            #     is_jiakong = True
+            #     desc.append(f"他爻相生")
+            if yao_dizhi == month_jian:
+                is_jiakong = True
+                desc.append(f"临当月之月建 {month_jian}，为旺相")
+
+            if not is_jiakong:
+                desc.append("{yao_dizhi} 静爻、无生、非旺相，属真空无用")
+            #假空判断什么时候填实
+            else:
+                tianshi_zhi = element_to_zhi.get(yao['element'], "未知")
+                chongshi_zhi = zhi_chong.get(yao_dizhi)
+            
+                desc.append(f"假空，在{tianshi_zhi}日可填实，在{chongshi_zhi}日可冲实")
+
+            
+            xunkong_props = {}
+            xunkong_props["is_jiakong"] = is_jiakong
+            xunkong_props["description"] = "，".join(desc)
+            
+            yao['xunkong_propertie'] = xunkong_props
+    return gua
 
 
 

@@ -1,6 +1,6 @@
 from gua_engine.gua_builder import build_hexagram, step8_parse
 from gua_engine.yongshen_researcher import ask_deepseek_for_yongshen, parse_yongshen_response,add_yongshen_to_gua
-from gua_engine.rule_data import process_all_lines
+from gua_engine.rule_data import process_all_lines_wangshuai, process_all_lines_xunkong
 
 def main():
      # 第 1 步：排盘
@@ -24,13 +24,13 @@ def main():
     # print("用神结果：", yongshen)
     # print("最终排盘结果：", gua)
 
-    result,gua = process_all_lines(gua)
+    result,gua = process_all_lines_wangshuai(gua)
     # print("旺衰结果：")
     # for line in result:
     #     print(f"爻位 {line['line_index']}：{line['wang_shuai']['description']} (分数: {line['wang_shuai']['score']})")
     #     if 'changed_wang_shuai' in line:
     #         print(f"变爻旺衰：{line['changed_wang_shuai']['description']} (分数: {line['changed_wang_shuai']['score']})")
-
+    gua = process_all_lines_xunkong(gua)
     print("最终排盘结果（含旺衰）：", gua)
 if __name__ == "__main__":
     main()
