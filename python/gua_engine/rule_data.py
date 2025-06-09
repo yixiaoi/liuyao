@@ -1,4 +1,4 @@
-from gua_engine.gua_data import is_conflict, calc_relation, element_generate_me,is_xunkong_func,zhi_chong, element_to_zhi,is_jin_shen,is_tui_shen
+from gua_engine.gua_data import is_conflict, calc_relation, element_generate_me,is_xunkong_func,zhi_chong, element_to_zhi,check_changed_yao
 
 def evaluate_wangshuai(yao, date_info, is_changed=False):
     """
@@ -156,17 +156,15 @@ def process_all_lines_xunkong(gua):
             yao['xunkong_propertie'] = xunkong_props
     return gua
 
-def process_all_lines_jin_tui_shen (gua):
+def process_all_changed_lines (gua):
     """
-    处理所有爻的进退神状态
+    处理所有动爻的进退神，回头生克，反吟浮吟状态
     :param gua: dict，包含所有爻信息的卦象
     :return: 更新后的卦象
     """
     for yao in gua['lines']:
         if yao["is_changed"]:
-            yao["changed_properties"]["is_jin_shen"] = is_jin_shen(yao)
-            yao["changed_properties"]["is_tui_shen"] = is_tui_shen(yao)
-
+            check_changed_yao(yao)
     return gua
 
 

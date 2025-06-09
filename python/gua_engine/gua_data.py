@@ -291,6 +291,7 @@ def is_jin_shen(yao):
     
     if jin_shen.get(yao_dizhi) == changed_dizhi:
         #print(f"进神{yao_dizhi}变为{changed_dizhi}")
+        yao["changed_properties"]["description"] += f"进神：{yao_dizhi}变为{changed_dizhi}。" 
         return True
     else:
         return False
@@ -307,7 +308,84 @@ def is_tui_shen(yao):
         return False
     
     if jin_shen.get(yao_dizhi) == changed_dizhi:
+        yao["changed_properties"]["description"] += f"退神{yao_dizhi}变为{changed_dizhi}。" 
         #print(f"退神{yao_dizhi}变为{changed_dizhi}")
         return True
     else:
         return False
+    
+def is_fan_ying(yao):
+    """
+    判断变爻是否为反吟
+    指变爻的地支与原爻的地支相冲
+    """
+    if not yao["is_changed"]:
+        return False
+    yao_dizhi = yao['najia_di_zhi']
+    changed_dizhi = yao["changed_properties"].get("najia_di_zhi", "")
+    
+    if is_conflict(yao_dizhi,changed_dizhi):
+        yao["changed_properties"]["description"] += f"反吟：{yao_dizhi}与{changed_dizhi}相冲。"
+        # print(f"反吟：{yao_dizhi}与{changed_dizhi}相冲")
+        return True  
+    else:
+        return False
+    
+def is_fu_ying(yao):
+    """
+    判断变爻是否为伏吟
+    指变爻的地支与原爻的地支完全相同
+    """
+    if not yao["is_changed"]:
+        return False
+    yao_dizhi = yao['najia_di_zhi']
+    changed_dizhi = yao["changed_properties"].get("najia_di_zhi", "")
+    
+    if yao_dizhi == changed_dizhi:
+        yao["changed_properties"]["description"] += f"伏吟：{yao_dizhi}与{changed_dizhi}相同。"
+        return True  
+    else:
+        return False
+    
+def is_hui_tou_sheng(yao):
+    """
+    判断变爻是否为回头生
+    指变爻的地支与原爻的地支相合
+    """
+    if not yao["is_changed"]:
+        return False
+    yao_element = yao['element']
+    changed_element = yao["changed_properties"].get("element", "")
+    
+    if element_generate_me.get(yao_element) == changed_element:
+        yao["changed_properties"]["description"] += f"回头生：{yao_element}被{changed_element}生。"
+        return True  
+    else:
+        return False
+def is_hui_tou_ke(yao):
+    """
+    判断变爻是否为回头克
+    指变爻的地支与原爻的地支相克
+    """
+    if not yao["is_changed"]:
+        return False
+    yao_element = yao['element']
+    changed_element = yao["changed_properties"].get("element", "")
+    
+    if element_i_overcome.get(yao_element) == changed_element:
+        yao["changed_properties"]["description"] += f"回头克：{yao_element}被{changed_element}克。"
+        return True  
+    else:
+        return False
+    
+def check_changed_yao(yao):
+    """
+    检查变爻的各种状态
+    """
+    yao["changed_properties"]["description"] = ""
+    yao["is_jin_shen"] = is_jin_shen(yao)
+    yao["is_tui_shen"] = is_tui_shen(yao)
+    yao["is_fan_ying"] = is_fan_ying(yao)
+    yao["is_fu_ying"] = is_fu_ying(yao)
+    yao["is_hui_tou_sheng"] = is_hui_tou_sheng(yao)
+    yao["is_hui_tou_ke"] = is_hui_tou_ke(yao)
