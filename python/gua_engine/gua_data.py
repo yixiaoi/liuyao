@@ -273,3 +273,41 @@ def is_xunkong_func(yao, day_ganzhi):
 
     # 不在表中则默认不空
     return False
+
+# 地支冲关系
+jin_shen = {'寅': '卯', '申': '酉', '丑': '辰', '未': '戌'}
+
+tui_shen = {'卯': '寅', '酉': '申', '辰': '丑', '戌': '未'}
+
+def is_jin_shen(yao):
+    """判断变爻是否为进神"""
+    if not yao["is_changed"]:
+        return False
+    yao_dizhi = yao['najia_di_zhi']
+    changed_dizhi = yao["changed_properties"].get("najia_di_zhi", "")
+
+    if not yao_dizhi in jin_shen:
+        return False
+    
+    if jin_shen.get(yao_dizhi) == changed_dizhi:
+        #print(f"进神{yao_dizhi}变为{changed_dizhi}")
+        return True
+    else:
+        return False
+
+
+def is_tui_shen(yao):
+    """判断变爻是否为退神"""
+    if not yao["is_changed"]:
+        return False
+    yao_dizhi = yao['najia_di_zhi']
+    changed_dizhi = yao["changed_properties"].get("najia_di_zhi", "")
+
+    if not yao_dizhi in tui_shen:
+        return False
+    
+    if jin_shen.get(yao_dizhi) == changed_dizhi:
+        #print(f"退神{yao_dizhi}变为{changed_dizhi}")
+        return True
+    else:
+        return False
