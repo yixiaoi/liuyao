@@ -15,6 +15,7 @@ def build_hexagram(raw_input: List[str],day_gan: str = "", day_zhi: str = "", mo
     gua["month_zhi"] =  month_zhi
     gua["day_gan"] = day_gan
     gua["day_zhi"] = day_zhi
+    gua = step8_parse(gua)
     return gua
 
 
