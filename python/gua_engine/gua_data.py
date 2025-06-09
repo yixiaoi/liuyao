@@ -389,3 +389,53 @@ def check_changed_yao(yao):
     yao["is_fu_ying"] = is_fu_ying(yao)
     yao["is_hui_tou_sheng"] = is_hui_tou_sheng(yao)
     yao["is_hui_tou_ke"] = is_hui_tou_ke(yao)
+
+
+    
+def change_yao_to_others_relation(yao, gua):
+    source_index = yao["index"]
+    source_element = yao["element"]
+    source_zhi = yao["najia_di_zhi"]
+
+    # 遍历所有其他爻
+    for target in gua["lines"]:
+        target_index = target["index"]
+        if target_index == source_index:
+            continue  # 跳过自身
+
+        target_element = target["element"]
+        target_zhi = target["najia_di_zhi"]
+
+        # 判断生克关系
+        if element_generate_me.get(target_element) == source_element:
+            target.setdefault("relations", [])
+            target["relations"].append({
+                "from": source_index,
+                "type": "generate",
+                "description": f"动爻{source_index}生爻{target_index}"
+            })
+        elif element_overcome_me.get(target_element) == source_element:
+            target.setdefault("relations", [])
+            target["relations"].append({
+                "from": source_index,
+                "type": "overcome",
+                "description": f"动爻{source_index}生爻{target_index}"
+            })
+        
+        # if is_conflict(source_zhi, target_zhi):
+        #     target.setdefault("relations", [])
+        #     target["relations"].append({
+        #         "from": source_index,
+        #         "type": "conflict",
+        #         "description": f"动爻{source_index}冲爻{target_index}"
+        #     })
+        # if is_he(source_zhi, target_zhi):
+        #     target.setdefault("relations", [])
+        #     target["relations"].append({
+        #         "from": source_index,
+        #         "type": "he",
+        #         "description": f"动爻{source_index}合爻{target_index}"
+        #     })
+
+    return gua
+

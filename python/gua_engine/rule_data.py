@@ -1,4 +1,4 @@
-from gua_engine.gua_data import is_conflict, calc_relation, element_generate_me,is_xunkong_func,zhi_chong, element_to_zhi,check_changed_yao
+from gua_engine.gua_data import is_conflict, calc_relation, element_generate_me,is_xunkong_func,zhi_chong, element_to_zhi,check_changed_yao,change_yao_to_others_relation
 
 def evaluate_wangshuai(yao, date_info, is_changed=False):
     """
@@ -167,33 +167,11 @@ def process_all_changed_lines (gua):
             check_changed_yao(yao)
     return gua
 
-
-def rule_fumu_mov_transform_ke(gua):
-    matched = []
-    for yao in gua.get("yaos", []):
-        if (
-            yao.get("type") == "父母"
-            and yao.get("is_moving")
-            and yao.get("transforms_to") is not None
-            and 克(yao["transforms_to"]["element"], yao["element"])
-        ):
-            matched.append("父母爻发动化回头克")
-    return matched
-
-def 克(elem_a, elem_b):
-    # 简化的五行相克逻辑示例，可自行扩展为五行表
-    克关系 = {
-        "木": "土",
-        "火": "金",
-        "土": "水",
-        "金": "木",
-        "水": "火"
-    }
-    return 克关系.get(elem_a) == elem_b
-
-
-# 注册所有规则
-ALL_RULES = [
-    rule_fumu_mov_transform_ke,
-    # 你可以继续添加规则函数
-]
+def process_all_relations(gua):
+    # 初始化每个 line 的 relations 列表
+    for line in gua["lines"]:
+        line["relations"] = []
+        for yao in gua['lines']:
+            if yao["is_changed"]:
+                change_yao_to_others_relation(yao,gua)
+    return gua
