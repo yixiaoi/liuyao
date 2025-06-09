@@ -318,8 +318,8 @@ def step8_parse(old_gua: dict) -> dict:
             'inner_gua': old_gua['inner_gua']
         },
         'hexagram_changed': {
-            'binary': old_gua['changed_hexagram'],
-            'name': old_gua['changed_hexagram_name']
+            'binary':  old_gua.get('changed_hexagram', ''),
+            'name': old_gua.get('changed_hexagram_name', '')
         },
         'divination_context': {
             'generation_type': old_gua['generation_type'],

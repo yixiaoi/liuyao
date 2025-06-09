@@ -1,4 +1,4 @@
-from gua_engine.gua_data import is_conflict, calc_relation, generate_changed_properties_for_yao,element_generate_me,is_xunkong_func,zhi_chong, element_to_zhi
+from gua_engine.gua_data import is_conflict, calc_relation, element_generate_me,is_xunkong_func,zhi_chong, element_to_zhi
 
 def evaluate_wangshuai(yao, date_info, is_changed=False):
     """
@@ -82,16 +82,11 @@ def is_an_dong(yao, all_lines, date_info, is_wangxiang_func, is_xunkong_func):
     return False
 
 def process_all_lines_wangshuai(guaxiang: dict):
-    result = []
     date_info = guaxiang['divination_context']['date_info']
     all_lines = guaxiang['lines']
     for line in all_lines:
-        # line_result = {}
-
         # 原爻旺衰
         base_eval = evaluate_wangshuai(line, date_info)
-        # line_result['line_index'] = line['index']
-        # line_result['wang_shuai'] = base_eval
         line["wang_shuai"] = base_eval  # 将旺衰结果存回
 
         # 判断是否是暗动爻
@@ -99,18 +94,8 @@ def process_all_lines_wangshuai(guaxiang: dict):
                                                      is_wangxiang_func, is_xunkong_func):
             print(f"爻位 {line['index']} 暗动") 
             line["wang_shuai"] = {base_eval['score'],base_eval["description"]+"暗动"}  
-            
-            # line_result['is_an_dong'] = True
-            # 模拟一个动爻（即变爻），变成新的爻
-            
-            changed_line = generate_changed_properties_for_yao(line['index'], guaxiang)
-            changed_eval = evaluate_wangshuai(changed_line, date_info, is_changed=True)
-            # line_result['changed_wang_shuai'] = changed_eval
             line['is_an_dong'] = True  # 标记为变爻
-            line['changed_properties'] = changed_line
-            line['changed_properties']["wang_shuai"] = changed_eval  # 将变爻旺衰结果存回
         else:
-            # line_result['is_an_dong'] = False
             line['is_an_dong'] = False 
 
         # 若有变爻则处理变爻
@@ -119,12 +104,9 @@ def process_all_lines_wangshuai(guaxiang: dict):
             changed_line['najia_di_zhi'] = changed_line['najia_di_zhi']
             changed_line['element'] = changed_line['element']
             changed_eval = evaluate_wangshuai(changed_line, date_info, is_changed=True)
-            # line_result['changed_wang_shuai'] = changed_eval
             line['changed_properties']["wang_shuai"] = changed_eval  # 将变爻旺衰结果存回
 
-        # result.append(line_result)
-
-    return result,guaxiang
+    return guaxiang
 
 
 def process_all_lines_xunkong(gua):

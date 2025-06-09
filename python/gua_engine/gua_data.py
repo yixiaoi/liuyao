@@ -240,49 +240,6 @@ def calc_relation(yao_element, yao_zhi, zhi, zhi_element, label):
 
     return score, desc
 
-def generate_changed_properties_for_yao(yao_index: int, gua: dict) -> dict:
-    """为暗动爻构造变爻信息"""
-    changed_inner = tuple(gua['hexagram_changed']["binary"][0:3])
-    changed_outer = tuple(gua['hexagram_changed']["binary"][3:6])
-
-    changed_inner_name = three_yao_to_gua.get(changed_inner, "未知")
-    changed_outer_name = three_yao_to_gua.get(changed_outer, "未知")
-
-    # 判断使用哪个宫位来取纳甲
-    is_inner = yao_index < 3
-    if is_inner:
-        used_gua_list = na_jia_table[changed_inner_name]["inner"]
-        gan, zhi = used_gua_list[yao_index]
-    else:
-        used_gua_list = na_jia_table[changed_outer_name]["outer"]
-        gan, zhi = used_gua_list[yao_index - 3]
-
-    element = zhi_to_element.get(zhi, "未知")
-
-    # 本卦的五行用于判断六亲
-    my_element = eight_gua_to_element[gua['divination_context']["gong_name"]]
-
-    if element_generate_me[my_element] == element:
-        six_relative = "父母"
-    elif element_i_generate[my_element] == element:
-        six_relative = "子孙"
-    elif element_overcome_me[my_element] == element:
-        six_relative = "官鬼"
-    elif element_i_overcome[my_element] == element:
-        six_relative = "妻财"
-    elif my_element == element:
-        six_relative = "兄弟"
-    else:
-        six_relative = "未知"
-
-    return {
-        "changed_na_jia_gan": gan,
-        "changed_na_jia_zhi": zhi,
-        "changed_element": element,
-        "changed_six_relative": six_relative,
-        "element": element,  # 为了兼容旧函数
-        "najia_di_zhi": zhi
-    }
 
 # 写死的旬空表，每组旬含10个日干支，对应一个旬空地支对
 xunkong_table = {
