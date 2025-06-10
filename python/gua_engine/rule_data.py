@@ -27,9 +27,14 @@ def evaluate_wangshuai(yao, date_info, is_changed=False):
         score -= 2
         return {"score": score, "description": "，".join(desc)}
     if is_conflict(yao_dizhi, day_zhi):
-        desc.append("日破")
-        score -= 2
-        return {"score": score, "description": "，".join(desc)}
+        if is_xunkong_func(yao, day_ganzhi):
+            desc.append("日破，但地支旬空被充实,不算破")
+            score += 1
+            return {"score": score, "description": "，".join(desc)}
+        else:
+            desc.append("日破")
+            score -= 2
+            return {"score": score, "description": "，".join(desc)}
 
     ### ==== 月建关系 ====
     score_month, desc_month = calc_relation(yao_element, yao_dizhi, month_zhi, month_element, "月建")
@@ -127,7 +132,7 @@ def process_all_lines_xunkong(gua):
         if is_xunkong:
             desc = []
             is_jiakong = False  #默认真空
-            desc.append(f"旬空地支：{yao['najia_di_zhi']}在{date_info['day_ganzhi']}旬空")
+            desc.append(f"{yao['najia_di_zhi']}{yao['element']}{yao['index']}爻在{date_info['day_ganzhi']}旬空")
             #判断真空假空
             if yao["is_changed"] or (not yao["is_changed"] and yao.get("is_an_dong")):
                 is_jiakong = True
@@ -154,6 +159,12 @@ def process_all_lines_xunkong(gua):
             xunkong_props["description"] = "，".join(desc)
             
             yao['xunkong_propertie'] = xunkong_props
+        
+        if yao.get("is_changed"):
+            changed_yao = yao['changed_properties']
+            changed_is_xunkong = is_xunkong_func(changed_yao, date_info['day_ganzhi'])
+            changed_yao['is_xunkong'] = changed_is_xunkong 
+
     return gua
 
 def process_all_changed_lines (gua):
