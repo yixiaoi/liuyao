@@ -372,7 +372,7 @@ def is_hui_tou_ke(yao):
     yao_element = yao['element']
     changed_element = yao["changed_properties"].get("element", "")
     
-    if element_i_overcome.get(yao_element) == changed_element:
+    if element_overcome_me.get(yao_element) == changed_element:
         yao["changed_properties"]["description"] += f"回头克：{yao_element}被{changed_element}克。"
         return True  
     else:
