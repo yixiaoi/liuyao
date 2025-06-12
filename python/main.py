@@ -12,10 +12,10 @@ def main():
     #raw_input = ["少阳", "少阴", "老阴", "少阳", "老阳", "老阴"]
     #raw_input = ["少阳", "老阳", "少阴", "少阴", "老阴", "少阳"]
     raw_input = ["少阴", "少阴", "老阳", "少阳", "少阴", "老阴"]
-    question="问员工依依（女）的状态如何？ 已经过去所以请你客观不用鼓励"
+    question="我摇卦问我的雇员依依（女）的状态如何？ 已经过去所以请你客观不用鼓励"
     gua = build_hexagram(raw_input,"己","亥","辛","巳")
-    response =gua_resolver(gua,question)
-    print("处理前返回：", response)
+    # response =gua_resolver(gua,question)
+    # print("处理前返回：", response)
 
     # from pprint import pprint
     # pprint(gua)
@@ -27,15 +27,14 @@ def main():
 
     
 
-    # response =ask_deepseek_for_yongshen(gua,question)
-    # # print("GPT 原始返回：", response)
-    # yongshen = parse_yongshen_response(response)
-    # gua = add_yongshen_to_gua(gua, yongshen)
-    # print("用神结果：", yongshen)
+    response =ask_deepseek_for_yongshen(gua,question)
+    print("GPT 原始返回：", response)
+    yongshen = parse_yongshen_response(response)
+    gua = add_yongshen_to_gua(gua, yongshen)
 
     gua = process_all_changed_lines(gua)
     gua = process_all_relations(gua)
-    print("最终排盘结果（含旺衰）：", gua)
+    print("最终排盘结果：", gua)
 
     response =gua_resolver(gua,question)
     print("处理后返回：", response)

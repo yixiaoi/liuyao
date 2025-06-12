@@ -3,7 +3,7 @@ import os
 import json
 import requests
 from dotenv import load_dotenv
-
+from gua_engine.gua_data import yong_shen_relation
 # 加载环境变量
 load_dotenv()
 
@@ -13,8 +13,9 @@ API_URL = "https://api.deepseek.com/v1/chat/completions"
 MODEL_NAME = "deepseek-chat"
 
 def ask_deepseek_for_yongshen(gua_data,question):
-    with open('python/prompt/yongshen_rules.txt', 'r', encoding='utf-8') as f:
-        system_prompt = f.read()
+    
+    system_prompt = f"""你是一个经验丰富的六爻预测师傅，专业的六爻文化学习者,牢记六爻经典，严谨又客观
+"""
     
     user_prompt = f"""请根据以下六爻排盘信息，判断哪个爻为用神，并说明理由：
 
@@ -30,8 +31,8 @@ def ask_deepseek_for_yongshen(gua_data,question):
     "爻位": "三爻",
     "index": 3,
     "六亲": "官鬼",
-    "五行": "火",
-    "理由": "因为问题与求职相关，官鬼代表事业，是用神"
+    "理由": "因为问题与求职相关，官鬼代表事业，是用神",
+    其他用神可能性: "有。可能是二爻,因为它也是官鬼，用神两现。但因为三爻是动爻而二爻不是，所以选择了三爻"/ "无"
   }}
 }}"""
 
@@ -76,11 +77,23 @@ def parse_yongshen_response(response):
 def add_yongshen_to_gua(gua_data, yongshen):
     if not yongshen:
         return gua_data
+     
+
+    yongshen_index = yongshen["index"]
+    yongshen_reason = yongshen.get("理由", "无具体理由")
     
     for line in gua_data["lines"]:
-        if line["index"] == yongshen["index"]:
-            line["is_yongshen"] = True
+        line["is_yong_shen"] = (line["index"] == yongshen_index)
+        
+        if line["is_yong_shen"]:
+            line["yongshen_description"] = f"此爻为用神。{yongshen_reason}"
+            yongshen_element = line.get("element", "未知")
         else:
-            line["is_yongshen"] = False
+            line["yongshen_description"] = ""
+    
+    for line in gua_data["lines"]:
+        description, is_yuanshen = yong_shen_relation(line, yongshen_element,yongshen_index)
+        line["is_yuan_shen"] = is_yuanshen
+        line["yongshen_description"] += description
     
     return gua_data

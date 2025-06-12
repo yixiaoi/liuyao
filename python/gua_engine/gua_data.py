@@ -439,3 +439,29 @@ def change_yao_to_others_relation(yao, gua):
 
     return gua
 
+def yong_shen_relation(yao,yongshen_element,yongshen_index):
+    """
+    判断用神与动爻的关系
+    :param yao: dict，动爻信息
+    :param yongshen_element: str，用神的五行元素
+    :return: str，描述关系
+    :return: bool，是否为元神
+    """
+    yao_element = yao['element']
+    
+    
+    if yao_element == yongshen_element:
+        if yao["index"] == yongshen_index:
+            return ("",False)
+        else:
+            return (f"此爻为用神两现。", False)
+    elif element_generate_me.get(yongshen_element) == yao_element:
+        return (f"此爻为元神，生用神，是用神力量的源泉，有利的因素，也代表人的思想、想法、思维、意识等",True)
+    elif element_overcome_me.get(yongshen_element) == yao_element:
+        return (f"此爻为忌神，克用神，是不利用神的因素，表现为阻碍，灾煞、死对头等",False)
+    elif element_i_overcome.get(yongshen_element) == yao_element:
+        return (f"此爻为仇神,此爻为间接对用神产生不好的影响，表现为仇人、小人、背后说坏话之人",True)
+    
+    return ("", False)
+    
+
