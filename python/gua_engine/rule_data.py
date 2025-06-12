@@ -137,15 +137,18 @@ def process_all_lines_xunkong(gua):
             if yao["is_changed"] or (not yao["is_changed"] and yao.get("is_an_dong")):
                 is_jiakong = True
                 desc.append(f"自身发动")
-            # if yao["relation"]["other_yao_generate_me"]:
-            #     is_jiakong = True
-            #     desc.append(f"他爻相生")
+
+            for relation in yao.get("relations", []):
+                if relation.get("type") == "generate":
+                    is_jiakong = True
+                    desc.append(f"他爻相生")
+
             if yao_dizhi == month_jian:
                 is_jiakong = True
-                desc.append(f"临当月之月建 {month_jian}，为旺相")
+                desc.append(f"临当月之月建{month_jian}，为旺相")
 
             if not is_jiakong:
-                desc.append("{yao_dizhi} 静爻、无生、非旺相，属真空无用")
+                desc.append(f"{yao_dizhi}静爻、无生、非旺相，属真空无用")
             #假空判断什么时候填实
             else:
                 tianshi_zhi = element_to_zhi.get(yao['element'], "未知")
