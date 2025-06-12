@@ -1,5 +1,5 @@
 from typing import List, Dict
-from gua_engine.gua_data import three_yao_to_gua, sixty_four_gua, na_jia_table,zhi_to_element,eight_gua_to_element, element_generate_me, element_i_generate, element_overcome_me, element_i_overcome
+from gua_engine.gua_data import three_yao_to_gua, sixty_four_gua, na_jia_table,zhi_to_element,eight_gua_to_element, element_generate_me, element_i_generate, element_overcome_me, element_i_overcome,element_to_six_kinship
 
 
 def build_hexagram(raw_input: List[str],day_gan: str = "", day_zhi: str = "", month_gan: str = "",month_zhi: str = "") -> Dict:
@@ -16,6 +16,7 @@ def build_hexagram(raw_input: List[str],day_gan: str = "", day_zhi: str = "", mo
     gua["day_gan"] = day_gan
     gua["day_zhi"] = day_zhi
     gua = step8_parse(gua)
+    gua = step9_add_fushen_to_gua(gua)
     return gua
 
 
@@ -250,19 +251,7 @@ def step8_assign_changed_lines_info(gua: dict) -> dict:
 
         element = zhi_to_element.get(zhi, "未知")
 
-        # 六亲计算仍用原卦“我”的五行
-        if element_generate_me[my_element] == element:
-            six_relative = "父母"
-        elif element_i_generate[my_element] == element:
-            six_relative = "子孙"
-        elif element_overcome_me[my_element] == element:
-            six_relative = "官鬼"
-        elif element_i_overcome[my_element] == element:
-            six_relative = "妻财"
-        elif my_element == element:
-            six_relative = "兄弟"
-        else:
-            six_relative = "未知"
+        six_relative = element_to_six_kinship(my_element, element)
 
         # 更新该变爻的值
         line["changed_na_jia_gan"] = gan
@@ -338,3 +327,98 @@ def step8_parse(old_gua: dict) -> dict:
     }
     
     return new_gua
+
+def step9_add_fushen_to_gua(gua_data):
+    """
+    为卦象补齐飞神和伏神信息
+    
+    参数:
+        gua_data: 当前卦象数据
+        sixty_four_gua: 六十四卦字典，包含各卦信息
+        na_jia_table: 纳甲表
+        zhi_to_element: 地支到五行的映射
+        
+    返回:
+        更新后的卦象数据
+    """
+    # 1. 收集当前卦中已存在的六亲
+    existing_kinships = {line["six_kinship"] for line in gua_data["lines"]}
+    
+    # 六亲完整列表
+    all_kinships = {"父母", "兄弟", "子孙", "妻财", "官鬼"}
+    
+    # 2. 确定缺失的六亲
+    missing_kinships = all_kinships - existing_kinships
+    if not missing_kinships:
+        return gua_data  # 没有缺失，直接返回
+    
+    # 3. 获取宫名
+    gong_name = gua_data["divination_context"]["gong_name"]
+    
+    # 4. 找到本宫卦（该宫的第一卦）
+    # 本宫卦的标识是(宫名, 宫名)
+    if (gong_name, gong_name) not in sixty_four_gua:
+        return gua_data  # 找不到本宫卦
+    
+    
+    # 5. 获取本宫卦的纳甲信息
+    if gong_name not in na_jia_table:
+        return gua_data
+    
+    gong_element = eight_gua_to_element.get(gong_name, None)
+    na_jia_info = na_jia_table[gong_name]
+    ben_gua_dizhi = [item[1] for item in na_jia_info["inner"]] + [item[1] for item in na_jia_info["outer"]]
+    ben_gua_six_elements_kinships = [(zhi_to_element[dizhi], element_to_six_kinship(gong_element, zhi_to_element[dizhi])) for dizhi in ben_gua_dizhi]
+
+    
+    # 6. 为每个缺失的六亲查找对应的本宫爻位
+    for kinship in missing_kinships:
+        # 在本宫卦中查找该六亲所在的爻位
+        for idx, element_kinship in enumerate(ben_gua_six_elements_kinships):
+            # 计算本宫卦中该爻的六亲（简化逻辑，实际中应根据宫五行和爻五行计算）
+            # 这里使用占位逻辑，实际应用需完善六亲计算
+            if kinship == element_kinship[1] :  # 实际中应检查六亲是否匹配
+                # 7. 在当前卦的对应爻位标记飞神
+                if idx < len(gua_data["lines"]):
+                    line = gua_data["lines"][idx]
+                    
+                    # 标记飞神
+                    line["is_feishen"] = True
+                    
+                    # 添加伏神信息
+                    fushen_info = {
+                        "fushen_dizhi": ben_gua_dizhi[idx],
+                        "fushen_element": element_kinship[0],
+                        "fushen_kinship": kinship,
+                        "relation": "",
+                        "description": ""
+                    }
+                    
+                    # 8. 分析飞神和伏神的关系
+                    feishen_element = line.get("element", "")
+                    fushen_element = element_kinship[0]  # 本宫卦中该爻的五行
+                    
+                    # 9. 定义五行关系
+
+                    if element_generate_me.get(fushen_element) == feishen_element:
+                        fushen_info["relation"] = "飞神生伏神"
+                        fushen_info["description"] = "伏神得到生助，为吉"
+                    elif element_overcome_me.get(fushen_element) == feishen_element:
+                        fushen_info["relation"] = "飞神克伏神"
+                        fushen_info["description"] = "伏神受到克害，为凶"
+                    elif element_i_generate.get(fushen_element) == feishen_element:
+                        fushen_info["relation"] = "伏神生飞神"
+                        fushen_info["description"] = "伏神泄气，力量丢失，为不利"
+                    elif element_i_overcome.get(fushen_element) == feishen_element:
+                        fushen_info["relation"] = "伏神克飞神"
+                        fushen_info["description"] = "伏神冲开飞神压制，为有利"
+                    else:
+                        fushen_info["relation"] = "无"
+                        fushen_info["description"] = "无"
+                    
+                    
+                    # 保存伏神信息
+                    line["fushen_info"] = fushen_info
+                    break  # 找到第一个匹配的爻位后跳出循环
+    
+    return gua_data

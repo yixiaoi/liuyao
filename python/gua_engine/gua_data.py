@@ -181,6 +181,21 @@ element_i_generate = {"金": "水", "水": "木", "木": "火", "火": "土", "�
 element_i_overcome = {"金": "木", "水": "火", "木": "土", "火": "金", "土": "水"}
 element_overcome_me = {"金": "火", "水": "土", "木": "金", "火": "水", "土": "木"}
 
+def element_to_six_kinship(gong_element, yao_element):
+        # 六亲计算仍用原卦“我”的五行
+    if element_generate_me.get(gong_element) == yao_element:
+        six_relative = "父母"
+    elif element_i_generate.get(gong_element) == yao_element:
+        six_relative = "子孙"
+    elif element_overcome_me.get(gong_element) == yao_element:
+        six_relative = "官鬼"
+    elif element_i_overcome.get(gong_element) == yao_element:
+        six_relative = "妻财"
+    elif gong_element == yao_element:
+        six_relative = "兄弟"
+    else:
+        six_relative = "未知"
+    return six_relative
 
 # 地支合关系
 zhi_he = {'子': '丑', '寅': '亥', '卯': '戌', '辰': '酉',
