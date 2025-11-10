@@ -1,0 +1,191 @@
+from gua_engine.gua_data import is_conflict, calc_relation, element_generate_me,is_xunkong_func,zhi_chong, element_to_zhi,check_changed_yao,change_yao_to_others_relation
+
+def evaluate_wangshuai(yao, date_info, is_changed=False):
+    """
+    :param yao: dict，一条爻，格式如题目所示
+    :param date_info: dict，含有'month_ganzhi', 'day_ganzhi', 'month_element', 'day_element'
+    :param is_changed: 是否是变爻，影响暗动处理逻辑
+    :return: {'score': float, 'description': str}
+    """
+
+    # 准备基本信息
+    yao_element = yao['element']
+    yao_dizhi = yao['najia_di_zhi']
+    month_ganzhi = date_info['month_ganzhi']
+    day_ganzhi = date_info['day_ganzhi']
+    month_zhi = month_ganzhi[1]  # 地支
+    day_zhi = day_ganzhi[1]
+    month_element = date_info['month_element']
+    day_element = date_info['day_element']
+
+    score = 0
+    desc = []
+
+    ### ==== 冲破先判定：月破/日破（最优先）====
+    if is_conflict(yao_dizhi, month_zhi):
+        desc.append("月破")
+        score -= 2
+        return {"score": score, "description": "，".join(desc)}
+    if is_conflict(yao_dizhi, day_zhi):
+        if is_xunkong_func(yao, day_ganzhi):
+            desc.append("日破，但地支旬空被充实,不算破")
+            score += 1
+            return {"score": score, "description": "，".join(desc)}
+        else:
+            desc.append("日破")
+            score -= 2
+            return {"score": score, "description": "，".join(desc)}
+
+    ### ==== 月建关系 ====
+    score_month, desc_month = calc_relation(yao_element, yao_dizhi, month_zhi, month_element, "月建")
+    score += score_month
+    desc.extend(desc_month)
+
+    ### ==== 日辰关系 ====
+    score_day, desc_day = calc_relation(yao_element, yao_dizhi, day_zhi, day_element, "日辰")
+    score += score_day
+    desc.extend(desc_day)
+
+    return {"score": score, "description": "，".join(desc)}
+
+def is_wangxiang_func(yao, date_info):
+    """判断这个爻在日月中是否算旺相"""
+    month_score, _ = calc_relation(yao['element'], yao['najia_di_zhi'],
+                                   date_info['month_ganzhi'][1], date_info['month_element'], "月")
+    day_score, _ = calc_relation(yao['element'], yao['najia_di_zhi'],
+                                 date_info['day_ganzhi'][1], date_info['day_element'], "日")
+    return (month_score + day_score) > 0.5
+
+
+def is_an_dong(yao, all_lines, date_info, is_wangxiang_func, is_xunkong_func):
+    """判断是否是暗动"""
+    if yao.get("is_changed"):  # 动爻不能暗动
+        return False
+
+    yao_dizhi = yao['najia_di_zhi']
+    yao_element = yao['element']
+    day_zhi = date_info['day_ganzhi'][1]  # 日辰地支
+    day_element = date_info['day_element']
+
+    # ① 日辰冲旺相
+    if is_conflict(yao_dizhi, day_zhi) and is_wangxiang_func(yao, date_info):
+        return True
+
+    # ② 被其他动爻生扶 且日辰冲
+    if is_conflict(yao_dizhi, day_zhi):
+        for line in all_lines:
+            if line.get("is_changed"):
+                element = line['element']
+                # 其他动爻对本爻生扶
+                if element_generate_me[yao_element] == element or yao_element == element:
+                    return True
+
+    # ③ 日辰冲旬空
+    if is_conflict(yao_dizhi, day_zhi) and is_xunkong_func(yao, date_info['day_ganzhi']):
+        return True
+
+    return False
+
+def process_all_lines_wangshuai(guaxiang: dict):
+    date_info = guaxiang['divination_context']['date_info']
+    all_lines = guaxiang['lines']
+    for line in all_lines:
+        # 原爻旺衰
+        base_eval = evaluate_wangshuai(line, date_info)
+        line["wang_shuai"] = base_eval  # 将旺衰结果存回
+
+        # 判断是否是暗动爻
+        if not line.get("is_changed") and is_an_dong(line, all_lines, date_info,
+                                                     is_wangxiang_func, is_xunkong_func):
+            print(f"爻位 {line['index']} 暗动") 
+            line["wang_shuai"] = {base_eval['score'],base_eval["description"]+"暗动"}  
+            line['is_an_dong'] = True  # 标记为变爻
+        else:
+            line['is_an_dong'] = False 
+
+        # 若有变爻则处理变爻
+        if line.get('is_changed') and 'changed_properties' in line:
+            changed_line = line['changed_properties'].copy()
+            changed_line['najia_di_zhi'] = changed_line['najia_di_zhi']
+            changed_line['element'] = changed_line['element']
+            changed_eval = evaluate_wangshuai(changed_line, date_info, is_changed=True)
+            line['changed_properties']["wang_shuai"] = changed_eval  # 将变爻旺衰结果存回
+
+    return guaxiang
+
+
+def process_all_lines_xunkong(gua):
+    """
+    处理所有爻的旬空状态
+    :param gua: dict，包含所有爻信息的卦象
+    :return: 更新后的卦象
+    """
+    date_info = gua['divination_context']['date_info']
+    month_jian = date_info['month_ganzhi'][1]  # 月建地支
+
+
+    for yao in gua['lines']:
+        yao_dizhi = yao['najia_di_zhi']
+        is_xunkong = is_xunkong_func(yao, date_info['day_ganzhi'])
+        yao['is_xunkong'] = is_xunkong
+
+        if is_xunkong:
+            desc = []
+            is_jiakong = False  #默认真空
+            desc.append(f"{yao['najia_di_zhi']}{yao['element']}{yao['index']}爻在{date_info['day_ganzhi']}旬空")
+            #判断真空假空
+            if yao["is_changed"] or (not yao["is_changed"] and yao.get("is_an_dong")):
+                is_jiakong = True
+                desc.append(f"自身发动")
+
+            for relation in yao.get("relations", []):
+                if relation.get("type") == "generate":
+                    is_jiakong = True
+                    desc.append(f"他爻相生")
+
+            if yao_dizhi == month_jian:
+                is_jiakong = True
+                desc.append(f"临当月之月建{month_jian}，为旺相")
+
+            if not is_jiakong:
+                desc.append(f"{yao_dizhi}静爻、无生、非旺相，属真空无用")
+            #假空判断什么时候填实
+            else:
+                tianshi_zhi = element_to_zhi.get(yao['element'], "未知")
+                chongshi_zhi = zhi_chong.get(yao_dizhi)
+            
+                desc.append(f"假空，在{tianshi_zhi}日可填实，在{chongshi_zhi}日可冲实")
+
+            
+            xunkong_props = {}
+            xunkong_props["is_jiakong"] = is_jiakong
+            xunkong_props["description"] = "，".join(desc)
+            
+            yao['xunkong_propertie'] = xunkong_props
+        
+        if yao.get("is_changed"):
+            changed_yao = yao['changed_properties']
+            changed_is_xunkong = is_xunkong_func(changed_yao, date_info['day_ganzhi'])
+            changed_yao['is_xunkong'] = changed_is_xunkong 
+
+    return gua
+
+def process_all_changed_lines (gua):
+    """
+    处理所有动爻的进退神，回头生克，反吟浮吟状态
+    :param gua: dict，包含所有爻信息的卦象
+    :return: 更新后的卦象
+    """
+    for yao in gua['lines']:
+        if yao["is_changed"]:
+            check_changed_yao(yao)
+    return gua
+
+def process_all_relations(gua):
+    # 初始化每个 line 的 relations 列表
+    for line in gua["lines"]:
+        line["relations"] = []
+        for yao in gua['lines']:
+            if yao["is_changed"]:
+                change_yao_to_others_relation(yao,gua)
+    return gua

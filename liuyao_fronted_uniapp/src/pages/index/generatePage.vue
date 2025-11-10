@@ -26,7 +26,7 @@
 
     <!-- 当选择 月建日辰 时显示 -->
     <view v-if="mode === 'monthDay'">
-        <uni-row class="demo-uni-row" :width="nvueWidth">
+      <uni-row class="demo-uni-row" :width="nvueWidth">
       <uni-col :span="12">
         
          <uni-section :title="'月建：'" type="line"></uni-section>

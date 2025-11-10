@@ -15,6 +15,12 @@
 		// 	}
 		// },
 		{
+			"path": "pages/index/showPage",
+			"style": {
+				"navigationBarTitleText": "ShowPage"
+			}
+		},
+		{
 			"path": "pages/index/generatePage",
 			"style": {
 				"navigationBarTitleText": "generateGua"
